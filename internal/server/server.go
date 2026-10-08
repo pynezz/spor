@@ -249,6 +249,8 @@ func ctypeFor(name string) string {
 		return "application/manifest+json"
 	case ".png":
 		return "image/png"
+	case ".webp":
+		return "image/webp"
 	case ".woff2":
 		return "font/woff2"
 	case ".txt":
@@ -345,8 +347,17 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		"L":         lc,
 		"PublicURL": s.cfg.PublicURL,
 		"SW":        s.swURL(),
+		"Links":     s.links(),
 	}
 	s.render(w, "index.html", data)
+}
+
+type footLinks struct {
+	Suno, Handle, Referral string
+}
+
+func (s *Server) links() footLinks {
+	return footLinks{Suno: s.cfg.SunoURL, Handle: s.cfg.SunoHandle, Referral: s.cfg.ReferralURL}
 }
 
 func (s *Server) swURL() string {
@@ -434,6 +445,7 @@ func (s *Server) handleShare(w http.ResponseWriter, r *http.Request) {
 		"Published": fmtDate(lc.Lang, t.Date),
 		"Created":   fmtDate(lc.Lang, t.Created),
 		"Stats":     st,
+		"Links":     s.links(),
 		"PlaysWord": plural(lc.S, "plays", st.Plays),
 		"LikesWord": plural(lc.S, "likes", st.Likes),
 	}

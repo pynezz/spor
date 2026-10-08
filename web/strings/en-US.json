@@ -41,5 +41,10 @@
   "otherLang": "På norsk",
   "latest": "Latest release",
   "track": "Track",
-  "details": "Details"
+  "details": "Details",
+  "brandAlt": "spor by skum",
+  "sunoFollow": "Follow %s on Suno",
+  "sunoProfile": "More music on Suno",
+  "referral": "free Suno credits",
+  "referralNote": "As per Suno TOS (250 free credits after signing up + creating 10 songs). 35 tracks for free in total (as of Oct 8, 2026)."
 }

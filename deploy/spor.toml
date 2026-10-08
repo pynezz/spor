@@ -15,5 +15,10 @@ media_rate = 10
 media_burst = 60
 trust_proxy = true
 play_log = true
-# Thumbs up, one per browser session per track (cache/likes.log).
+# Hearts, one per browser session per track (cache/likes.log).
 likes = true
+
+# Footer buttons. Empty hides a button.
+suno_url = "https://suno.com/@skumx"
+referral_url = "https://suno.com/invite/@skumx"
+

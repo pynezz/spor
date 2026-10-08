@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -25,6 +26,9 @@ type Config struct {
 	MediaBurst     int
 	PlayLog        bool
 	Likes          bool
+	SunoURL        string // artist profile, shown in the footer; "" hides it
+	ReferralURL    string // Suno referral link (free credits); "" hides it
+	SunoHandle     string // derived from SunoURL, e.g. "@skumx"
 }
 
 // DefaultConfig returns defaults matching the plan.
@@ -41,6 +45,7 @@ func DefaultConfig() Config {
 		MediaBurst:     60,
 		PlayLog:        true,
 		Likes:          true,
+		SunoURL:        "https://suno.com/@skumx",
 	}
 }
 
@@ -62,6 +67,8 @@ func LoadConfig(path string) (Config, error) {
 	str("library", &c.Library)
 	str("cache", &c.Cache)
 	str("public_url", &c.PublicURL)
+	str("suno_url", &c.SunoURL)
+	str("referral_url", &c.ReferralURL)
 	var keys, interval string
 	str("public_keys", &keys)
 	str("rescan_interval", &interval)
@@ -116,6 +123,20 @@ func (c *Config) Finish() error {
 	u, err := url.Parse(c.PublicURL)
 	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
 		return fmt.Errorf("public_url must be an absolute http(s) URL")
+	}
+	for name, p := range map[string]*string{"suno_url": &c.SunoURL, "referral_url": &c.ReferralURL} {
+		if *p == "" {
+			continue
+		}
+		if u, err := url.Parse(*p); err != nil || u.Scheme != "https" || u.Host == "" {
+			return fmt.Errorf("%s must be an https URL", name)
+		}
+	}
+	c.SunoHandle = ""
+	if u, err := url.Parse(c.SunoURL); err == nil {
+		if h := path.Base(u.Path); strings.HasPrefix(h, "@") {
+			c.SunoHandle = h
+		}
 	}
 	if len(c.PublicKeys) == 0 {
 		// systemd LoadCredential= or a podman secret.

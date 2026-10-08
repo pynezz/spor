@@ -37,7 +37,7 @@
 {{template "icons"}}
 {{with .J.CoverSm}}<div class="ambient page" aria-hidden="true"><img src="{{.}}" alt=""></div>{{end}}
 <header class="top">
-  <a class="wordmark" href="/">{{.L.S.siteName}}</a>
+  <a class="logo" href="/"><img src="{{static "spor-logo.png"}}" alt="{{.L.S.siteName}}" width="441" height="200"></a>
   {{if not .Unlisted}}<a class="back" href="/">{{.L.S.allTracks}}</a>{{end}}
 </header>
 <main class="share">
@@ -52,9 +52,9 @@
       </audio>{{end}}
     </div>
     <div class="hero-text">
-      <p class="eyebrow">{{.L.S.track}}{{with .T.Style}} · {{.}}{{end}}</p>
+      <p class="eyebrow">{{.L.S.track}}</p>
       <h1>{{.T.Title}}</h1>
-      <p class="meta">{{with .Created}}{{.}}{{else}}{{.Published}}{{end}}{{with .Duration}} · {{.}}{{end}}</p>
+      <p class="meta">{{with .T.Style}}<span class="genre-tag">{{.}}</span>{{end}}{{with .Created}}{{.}}{{else}}{{.Published}}{{end}}{{with .Duration}} · {{.}}{{end}}</p>
       <div class="actions">
         <button type="button" class="btn primary" id="hero-play"><svg><use href="#i-play"/></svg><span>{{.L.S.play}}</span></button>
         <button type="button" class="ib round heart" id="like-btn" aria-label="{{.L.S.like}}" aria-pressed="false" title="{{.L.S.like}}" hidden><svg class="line"><use href="#i-heart"/></svg></button>
@@ -75,7 +75,7 @@
   </div>
   <dialog id="qr-dialog" class="qr-dialog"><canvas id="qr-canvas" width="320" height="320"></canvas><p class="qr-url">{{.ShareURL}}</p><button type="button" class="btn primary" id="qr-close">{{.L.S.close}}</button></dialog>
 </main>
-{{template "foot" .L}}
+{{template "foot" .}}
 {{template "playerbar" .L}}
 </body>
 </html>

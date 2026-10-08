@@ -564,14 +564,28 @@
     go.className = 'go';
     go.append(icon('i-play'));
     art.append(go);
+    const text = [];
+    if (t.style) {
+      const g = document.createElement('p');
+      g.className = 'genre';
+      g.textContent = t.style;
+      text.push(g);
+    }
     const h = document.createElement('h3');
     h.textContent = t.title;
     const p = document.createElement('p');
     p.className = 'sub';
-    p.textContent = sub(t);
+    p.textContent = fmtDate(t.created || t.date) + (t.duration ? ' · ' + fmt(t.duration) : '');
+    text.push(h, p);
+    if (t.description) {
+      const d = document.createElement('p');
+      d.className = 'desc';
+      d.textContent = t.description;
+      text.push(d);
+    }
     const st = document.createElement('p');
     st.className = 'stats';
-    btn.append(art, h, p, st);
+    btn.append(art, ...text, st);
     btn.addEventListener('click', () => playAt(i));
     li.append(btn);
     return li;
@@ -582,7 +596,11 @@
   // The newest release gets the big slot at the top.
   function feature(t) {
     $('feature-title').textContent = t.title;
-    $('feature-meta').textContent = [t.style, fmtDate(t.created || t.date), t.duration ? fmt(t.duration) : ''].filter(Boolean).join(' · ');
+    $('feature-meta').textContent = [fmtDate(t.created || t.date), t.duration ? fmt(t.duration) : ''].filter(Boolean).join(' · ');
+    $('feature-genre').textContent = t.style || '';
+    $('feature-genre').hidden = !t.style;
+    $('feature-desc').textContent = t.description || '';
+    $('feature-desc').hidden = !t.description;
     if (t.coverLg) {
       $('feature-img').src = t.coverLg;
       $('feature-bg').src = t.coverSm || t.coverLg;

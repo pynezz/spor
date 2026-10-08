@@ -32,3 +32,18 @@ func TestFmtDate(t *testing.T) {
 		}
 	}
 }
+
+func TestFooterLinks(t *testing.T) {
+	c := DefaultConfig()
+	c.PublicKeys = []string{"x.pub"}
+	if err := c.Finish(); err != nil {
+		t.Fatal(err)
+	}
+	if c.SunoHandle != "@skumx" {
+		t.Fatalf("handle %q", c.SunoHandle)
+	}
+	c.ReferralURL = "http://suno.com/invite/x"
+	if err := c.Finish(); err == nil {
+		t.Fatal("plain http referral accepted")
+	}
+}

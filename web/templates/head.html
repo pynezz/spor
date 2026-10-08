@@ -20,6 +20,7 @@
 <symbol id="i-lyrics" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></symbol>
 <symbol id="i-video" viewBox="0 0 24 24"><path d="M3.5 6.5h12v11h-12zM15.5 10.5l5-3v9l-5-3"/></symbol>
 <symbol id="i-saved" viewBox="0 0 24 24"><path d="M12 4v10.5M7.5 10 12 14.5 16.5 10M5.5 19.5h13"/></symbol>
+<symbol id="i-ext" viewBox="0 0 24 24"><path d="M8 16 16 8M9.5 8H16v6.5"/></symbol>
 <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
 </defs></svg>{{end}}
 
@@ -47,4 +48,14 @@
 <aside id="lyrics" class="lyrics" hidden><button type="button" class="ib sm close" id="lyrics-close" aria-label="{{.S.close}}"><svg class="line"><use href="#i-close"/></svg></button><p class="eyebrow">{{.S.lyrics}}</p><pre id="lyrics-text"></pre></aside>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>{{end}}
 
-{{define "foot"}}<footer class="foot"><span class="wordmark small">{{.S.siteName}}</span><p class="keys">{{.S.keys}}</p><p><a href="{{.SwitchURL}}" hreflang="{{if eq .Lang "nb"}}en{{else}}nb{{end}}">{{.S.otherLang}}</a></p></footer>{{end}}
+{{define "foot"}}<footer class="foot">
+  <div class="foot-brand">
+    <img class="brand-img" src="{{static "brand.png"}}" alt="{{.L.S.brandAlt}}" width="1200" height="400" loading="lazy" decoding="async">
+    {{if or .Links.Suno .Links.Referral}}<div class="foot-links">
+      {{with .Links.Suno}}<a class="btn primary" href="{{.}}" target="_blank" rel="noopener noreferrer">{{if $.Links.Handle}}{{printf $.L.S.sunoFollow $.Links.Handle}}{{else}}{{$.L.S.sunoProfile}}{{end}}<svg class="line"><use href="#i-ext"/></svg></a>{{end}}
+      {{with .Links.Referral}}<a class="btn ghost" href="{{.}}" target="_blank" rel="noopener noreferrer"><span class="gift">250</span>{{$.L.S.referral}}<svg class="line"><use href="#i-ext"/></svg></a>{{end}}
+    </div>{{end}}
+    {{if .Links.Referral}}<p class="fine">{{.L.S.referralNote}}</p>{{end}}
+  </div>
+  <div class="foot-meta"><p class="keys">{{.L.S.keys}}</p><p><a href="{{.L.SwitchURL}}" hreflang="{{if eq .L.Lang "nb"}}en{{else}}nb{{end}}">{{.L.S.otherLang}}</a></p></div>
+</footer>{{end}}

@@ -120,6 +120,8 @@ func cmdServe(args []string) error {
 	pub := fs.String("pub", "", "public key file(s), comma separated")
 	pubURL := fs.String("url", "", "public base URL")
 	debug := fs.Bool("debug", false, "debug logging")
+	suno := fs.String("suno", "", "Suno profile URL for the footer")
+	referral := fs.String("referral", "", "Suno referral URL for the footer")
 	fs.Parse(args)
 
 	cfg := server.DefaultConfig()
@@ -149,6 +151,12 @@ func cmdServe(args []string) error {
 	}
 	if *pubURL != "" {
 		cfg.PublicURL = *pubURL
+	}
+	if *suno != "" {
+		cfg.SunoURL = *suno
+	}
+	if *referral != "" {
+		cfg.ReferralURL = *referral
 	}
 	if err := cfg.Finish(); err != nil {
 		return err

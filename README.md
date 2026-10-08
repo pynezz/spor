@@ -77,6 +77,8 @@ The server only needs the **public** key. It verifies once at scan time and cach
 
 The site is Norwegian (bokmål) for everyone, crawlers included; `?lang=en` gives the English strings. Likes are one per browser session per track: the browser keeps a random session id in `localStorage` and the server stores a hash of it. That stops double clicks, not someone determined to inflate a count. Set `likes = false` to turn them off.
 
+The footer shows `web/static/brand.png` and two buttons: `suno_url` (the artist profile, default `https://suno.com/@skumx`) and `referral_url` (a Suno referral link; hidden until set). Both must be https; an empty value hides the button. `spor serve -suno URL -referral URL` sets them without a config file. The full-size original artwork is kept in `assets/` so it is not embedded in the binary.
+
 ## Deploy (AlmaLinux VPS, native)
 
 ```sh

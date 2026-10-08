@@ -14,7 +14,7 @@
 <body data-page="library" data-strings="{{.L.StringsJS}}" data-sw="{{.SW}}">
 {{template "icons"}}
 <header class="top">
-  <a class="wordmark" href="/">{{.L.S.siteName}}</a>
+  <a class="logo" href="/"><img src="{{static "spor-logo.png"}}" alt="{{.L.S.siteName}}" width="441" height="200"></a>
   <p class="tagline">{{.L.S.tagline}}</p>
 </header>
 <section id="feature" class="feature" hidden aria-labelledby="feature-title">
@@ -24,7 +24,8 @@
     <div class="feature-text">
       <p class="eyebrow">{{.L.S.latest}}</p>
       <h1 id="feature-title"></h1>
-      <p class="meta" id="feature-meta"></p>
+      <p class="meta"><span class="genre-tag" id="feature-genre" hidden></span><span id="feature-meta"></span></p>
+      <p class="feature-desc" id="feature-desc" hidden></p>
       <div class="actions">
         <button type="button" class="btn primary" id="feature-play"><svg><use href="#i-play"/></svg><span>{{.L.S.play}}</span></button>
         <button type="button" class="ib round heart" id="feature-like" aria-label="{{.L.S.like}}" aria-pressed="false" hidden><svg class="line"><use href="#i-heart"/></svg></button>
@@ -40,7 +41,7 @@
   <ul id="grid" class="grid" aria-label="{{.L.S.library}}"></ul>
   <p id="empty" class="note" hidden>{{.L.S.empty}}</p>
 </main>
-{{template "foot" .L}}
+{{template "foot" .}}
 {{template "playerbar" .L}}
 </body>
 </html>

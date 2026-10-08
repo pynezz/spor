@@ -21,7 +21,7 @@ usage: add-track.sh [options] MEDIA [MEDIA...]
   -C CREATED      originally made, YYYY, YYYY-MM or YYYY-MM-DD
                                     (default: date or creation_time tag)
   -s STYLE        style / genre     (default: genre tag)
-  -D TEXT         description
+  -D TEXT         description       (default: description or comment tag)
   -v VISIBILITY   public | unlisted | draft   (default: public)
   -c IMAGE        cover image
   -l FILE         lyrics text file
@@ -90,7 +90,10 @@ fi
 first=${args[0]}
 
 # tag NAME: first matching tag of the first file, format or stream level, any case.
-probe=$(ffprobe -v error -show_entries format_tags:stream_tags -of flat "$first" 2>/dev/null || true)
+# File-level tags first, then audio streams (Ogg/Opus keep tags there). Video
+# streams are skipped: embedded cover art carries tags like comment="Other".
+probe=$(ffprobe -v error -show_entries format_tags -of flat "$first" 2>/dev/null || true)
+probe+=$'\n'$(ffprobe -v error -select_streams a -show_entries stream_tags -of flat "$first" 2>/dev/null || true)
 tag() {
 	grep -iE "^(format|streams\.stream\.[0-9]+)\.tags\.$1=" <<<"$probe" | head -n1 |
 		sed -E 's/^[^=]*="(.*)"$/\1/; s/\\"/"/g; s/\\\\/\\/g' || true
@@ -113,6 +116,8 @@ if [[ -z $created ]]; then
 	done
 fi
 [[ -n $style ]] || style=$(tag genre)
+[[ -n $desc ]] || desc=$(tag description)
+[[ -n $desc ]] || desc=$(tag comment)
 
 if [[ -z $slug ]]; then
 	slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' |
@@ -187,6 +192,8 @@ q() {
 	echo "visibility = $(q "$vis")"
 } >"$dir/meta.toml"
 
+[[ -n $style ]] || echo "warning: no style/genre (set it with -s, or a genre tag)" >&2
+[[ -n $desc ]] || echo "warning: no description (set it with -D, or a comment tag)" >&2
 echo "--- $dir/meta.toml"
 cat "$dir/meta.toml"
 echo "---"

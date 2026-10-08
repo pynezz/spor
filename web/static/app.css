@@ -53,9 +53,10 @@ svg.line { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: 
 .ambient.page img { opacity: .5; }
 
 /* ---------- top bar ---------- */
-.top { position: relative; display: flex; align-items: baseline; gap: 18px; padding: 26px var(--gut) 22px; }
-.wordmark { font: 700 1.45rem/1 var(--display); letter-spacing: -.045em; }
-.wordmark.small { font-size: 1.05rem; color: var(--mute); }
+.top { position: relative; display: flex; align-items: center; gap: 20px; padding: 22px var(--gut) 18px; }
+.logo { display: block; flex: none; border-radius: 6px; }
+.logo img { display: block; width: auto; height: 44px; }
+@media (max-width: 600px) { .logo img { height: 36px; } }
 .tagline { margin: 0; color: var(--dim); font-size: .85rem; }
 .back { margin-left: auto; color: var(--mute); font-size: .88rem; font-weight: 500; transition: color .15s; }
 .back:hover { color: var(--fg); }
@@ -93,7 +94,9 @@ main { position: relative; padding: 0 var(--gut); }
 .feature-cover:hover { transform: translateY(-2px); }
 .feature-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .feature h1, .hero-text h1 { margin: 0; font: 700 clamp(2.2rem, 5.2vw, 4.6rem)/1 var(--display); letter-spacing: -.04em; overflow-wrap: anywhere; text-wrap: balance; }
-.meta { margin: 14px 0 0; color: var(--mute); font-size: .95rem; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 14px 0 0; color: var(--mute); font-size: .95rem; }
+.genre-tag { padding: 3px 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px var(--line2); color: var(--fg); font-size: .7rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.feature-desc { margin: 16px 0 0; max-width: 56ch; color: #d6d6d6; font-size: .98rem; line-height: 1.6; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 30px; }
 .actions .counts { margin-left: 8px; }
 
@@ -122,7 +125,9 @@ main { position: relative; padding: 0 var(--gut); }
 @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 16px; } }
 .card h3 { margin: 12px 0 0; font-size: .93rem; font-weight: 600; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card.current h3 { color: var(--accent); }
+.card .genre { margin: 12px 0 -8px; color: var(--accent); font-size: .66rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .sub { margin: 2px 0 0; color: var(--mute); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .desc { margin: 6px 0 0; color: var(--dim); font-size: .8rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .stats { display: flex; gap: 12px; margin: 6px 0 0; color: var(--dim); font-size: .76rem; font-variant-numeric: tabular-nums; }
 .stats span { display: inline-flex; align-items: center; gap: 5px; }
 .stats svg { width: 12px; height: 12px; }
@@ -222,11 +227,21 @@ main { position: relative; padding: 0 var(--gut); }
 .qr-dialog canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 10px; background: #fff; padding: 12px; }
 .qr-url { font-size: .78rem; word-break: break-all; color: var(--mute); margin: 16px 0; }
 
-.foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 28px; margin: 72px var(--gut) 0; padding-top: 22px; border-top: 1px solid var(--line); color: var(--dim); font-size: .78rem; }
-.foot p { margin: 0; }
-.foot a { color: var(--mute); }
-.foot a:hover { color: var(--fg); }
-.foot p:last-child { margin-left: auto; }
+.foot { margin: 96px var(--gut) 0; color: var(--dim); font-size: .78rem; }
+.foot-brand { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 8px 0 48px; }
+.brand-img { display: block; width: min(560px, 92%); height: auto; }
+.foot-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.foot-links .btn { padding: 12px 22px; }
+.foot-links .btn svg { width: 15px; height: 15px; margin-left: -2px; }
+.btn.ghost { color: var(--fg); box-shadow: inset 0 0 0 1px var(--line2); }
+.btn.ghost:hover { box-shadow: inset 0 0 0 1px var(--fg); }
+.fine { margin: -10px 0 0; max-width: 46ch; text-align: center; color: var(--dim); font-size: .74rem; line-height: 1.55; text-wrap: balance; }
+.gift { padding: 2px 8px; border-radius: 99px; background: var(--accent); color: #000; font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.foot-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+.foot-meta p { margin: 0; }
+.foot-meta a { color: var(--mute); }
+.foot-meta a:hover { color: var(--fg); }
+.foot-meta p:last-child { margin-left: auto; }
 @media (hover: none) { .keys { display: none; } }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
