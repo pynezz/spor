@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="{{.L.Lang}}">
+<head>
+{{template "head"}}
+<title>{{.L.S.siteName}} · {{.L.S.library}}</title>
+<meta name="description" content="{{.L.S.tagline}}">
+<meta property="og:site_name" content="{{.L.S.siteName}}">
+<meta property="og:title" content="{{.L.S.siteName}}">
+<meta property="og:description" content="{{.L.S.tagline}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{.PublicURL}}/">
+<meta property="og:locale" content="{{.L.OGLocale}}">
+</head>
+<body data-page="library" data-strings="{{.L.StringsJS}}" data-sw="{{.SW}}">
+<header class="top">
+  <a class="brand" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22c4-10 8-10 12 0s8 10 12 0" /></svg>{{.L.S.siteName}}</a>
+  <p class="tagline">{{.L.S.tagline}}</p>
+</header>
+<main>
+  <noscript><p class="note">{{.L.S.noJs}}</p></noscript>
+  <section id="stage" class="stage" hidden></section>
+  <ul id="grid" class="grid" aria-label="{{.L.S.library}}"></ul>
+  <p id="empty" class="note" hidden>{{.L.S.empty}}</p>
+  <p class="keys">{{.L.S.keys}}</p>
+</main>
+{{template "playerbar" .L}}
+</body>
+</html>

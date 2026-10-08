@@ -1,0 +1,17 @@
+# /etc/spor/spor.toml
+listen = "127.0.0.1:8740"
+library = "/srv/spor/library"
+cache = "/var/lib/spor"
+public_url = "https://lytt.txtv.no"
+rescan_interval = "60s"
+sw_cache_limit_mb = 500
+
+# Public key(s), comma separated. If unset, spor reads
+# $CREDENTIALS_DIRECTORY/spor.pub (systemd LoadCredential=) instead.
+# public_keys = "/etc/spor/spor.pub"
+
+# Per-IP token bucket on /m/* and the play counter: refill per second, burst.
+media_rate = 10
+media_burst = 60
+trust_proxy = true
+play_log = true

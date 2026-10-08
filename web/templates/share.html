@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="{{.L.Lang}}">
+<head>
+{{template "head"}}
+<title>{{.T.Title}} · {{.L.S.siteName}}</title>
+<meta name="description" content="{{.Desc}}">
+{{if .Unlisted}}<meta name="robots" content="noindex">{{end}}
+<link rel="canonical" href="{{.ShareURL}}">
+<meta property="og:site_name" content="{{.L.S.siteName}}">
+<meta property="og:title" content="{{.T.Title}}">
+<meta property="og:description" content="{{.Desc}}">
+<meta property="og:url" content="{{.ShareURL}}">
+<meta property="og:locale" content="{{.L.OGLocale}}">
+{{if .J.Video}}<meta property="og:type" content="video.other">
+<meta property="og:video" content="{{.Abs}}{{.J.Video.URL}}">
+<meta property="og:video:secure_url" content="{{.Abs}}{{.J.Video.URL}}">
+<meta property="og:video:type" content="{{.J.Video.Type}}">
+{{if .T.Width}}<meta property="og:video:width" content="{{.T.Width}}">
+<meta property="og:video:height" content="{{.T.Height}}">{{end}}
+{{else}}<meta property="og:type" content="music.song">{{end}}
+{{if .OGAudio}}<meta property="og:audio" content="{{.Abs}}{{.OGAudio.URL}}">
+<meta property="og:audio:secure_url" content="{{.Abs}}{{.OGAudio.URL}}">
+<meta property="og:audio:type" content="{{.OGAudio.Type}}">{{end}}
+{{if .T.Duration}}<meta property="music:duration" content="{{printf "%.0f" .T.Duration}}">{{end}}
+{{if .J.CoverLg}}<meta property="og:image" content="{{.Abs}}{{.J.CoverLg}}">
+<meta property="og:image:secure_url" content="{{.Abs}}{{.J.CoverLg}}">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="{{.T.CoverW}}">
+<meta property="og:image:height" content="{{.T.CoverH}}">
+<meta property="og:image:alt" content="{{.T.Title}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{.Abs}}{{.J.CoverLg}}">{{else}}<meta name="twitter:card" content="summary">{{end}}
+<meta name="twitter:title" content="{{.T.Title}}">
+<meta name="twitter:description" content="{{.Desc}}">
+</head>
+<body data-page="share" data-strings="{{.L.StringsJS}}" data-sw="{{.SW}}" data-track="{{.TrackJSON}}">
+<header class="top">
+  <a class="brand" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22c4-10 8-10 12 0s8 10 12 0" /></svg>{{.L.S.siteName}}</a>
+  {{if not .Unlisted}}<a class="back" href="/">{{.L.S.allTracks}} →</a>{{end}}
+</header>
+<main class="share">
+  <div class="hero">
+    <div class="hero-media" id="stage">
+      {{if .J.Video}}<video id="media" controls playsinline preload="metadata"{{if .J.CoverLg}} poster="{{.J.CoverLg}}"{{end}}>
+        <source src="{{.J.Video.URL}}" type="{{.J.Video.Type}}">
+      </video>
+      {{else}}{{if .J.CoverLg}}<img class="hero-cover" id="hero-cover" src="{{.J.CoverLg}}" alt="" width="{{.T.CoverW}}" height="{{.T.CoverH}}">{{end}}
+      <audio id="media" controls preload="metadata">{{range .J.Audio}}
+        <source src="{{.URL}}" type="{{.Type}}">{{end}}
+      </audio>{{end}}
+    </div>
+    <div class="hero-text">
+      <h1>{{.T.Title}}</h1>
+      <p class="hero-sub">{{with .T.Style}}<span>{{.}}</span>{{end}}{{with .T.Date}}<span>{{.}}</span>{{end}}{{with .Duration}}<span>{{.}}</span>{{end}}</p>
+      {{with .T.Description}}<p class="hero-desc">{{.}}</p>{{end}}
+      <div class="hero-actions">
+        <button type="button" class="btn" id="share-btn" hidden>{{.L.S.share}}</button>
+        <button type="button" class="btn ghost" id="qr-btn" hidden>{{.L.S.qr}}</button>
+        <span class="verify" id="verify" hidden></span>
+      </div>
+      {{with .T.Lyrics}}<details class="hero-lyrics"><summary>{{$.L.S.lyrics}}</summary><pre>{{.}}</pre></details>{{end}}
+    </div>
+  </div>
+  <dialog id="qr-dialog" class="qr-dialog"><canvas id="qr-canvas" width="320" height="320"></canvas><p class="qr-url">{{.ShareURL}}</p><button type="button" class="btn" id="qr-close">{{.L.S.close}}</button></dialog>
+</main>
+{{template "playerbar" .L}}
+</body>
+</html>

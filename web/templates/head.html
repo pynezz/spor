@@ -1,0 +1,27 @@
+{{define "head"}}<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d0e12">
+<link rel="icon" href="{{static "icon.svg"}}" type="image/svg+xml">
+<link rel="manifest" href="{{static "app.webmanifest"}}">
+<link rel="stylesheet" href="{{static "app.css"}}">
+<script src="{{static "qr.js"}}" defer></script>
+<script src="{{static "app.js"}}" defer></script>{{end}}
+
+{{define "playerbar"}}<div id="player" class="player" hidden>
+  <button class="pl-cover" id="pl-cover" type="button" aria-label="{{.S.video}}"><img id="pl-img" alt=""></button>
+  <div class="pl-meta"><div class="pl-title" id="pl-title"></div><div class="pl-sub" id="pl-sub"></div></div>
+  <div class="pl-ctrl">
+    <button type="button" class="ib" id="pl-prev" aria-label="{{.S.prev}}" title="{{.S.prev}} (K)"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+    <button type="button" class="ib big" id="pl-play" aria-label="{{.S.play}}" title="{{.S.play}} (␣)"><svg viewBox="0 0 24 24" class="i-play"><path d="M7 4v16l13-8z"/></svg><svg viewBox="0 0 24 24" class="i-pause"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
+    <button type="button" class="ib" id="pl-next" aria-label="{{.S.next}}" title="{{.S.next}} (J)"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+  </div>
+  <div class="pl-wave"><span class="pl-time" id="pl-cur">0:00</span><canvas id="pl-canvas" role="slider" tabindex="0" aria-label="{{.S.seek}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></canvas><span class="pl-time" id="pl-dur">0:00</span></div>
+  <div class="pl-extra">
+    <button type="button" class="ib sm" id="pl-video" aria-label="{{.S.video}}" title="{{.S.video}}" hidden><svg viewBox="0 0 24 24"><path d="M3 6h13v12H3zM17 10l4-3v10l-4-3z"/></svg></button>
+    <button type="button" class="ib sm" id="pl-lyrics" aria-label="{{.S.lyrics}}" title="{{.S.lyrics}}" hidden><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg></button>
+    <button type="button" class="ib sm" id="pl-share" aria-label="{{.S.share}}" title="{{.S.share}}"><svg viewBox="0 0 24 24"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z"/></svg></button>
+  </div>
+</div>
+<aside id="lyrics" class="lyrics" hidden><button type="button" class="ib sm close" id="lyrics-close" aria-label="{{.S.close}}">✕</button><h2>{{.S.lyrics}}</h2><pre id="lyrics-text"></pre></aside>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>{{end}}
