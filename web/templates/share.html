@@ -34,9 +34,11 @@
 <meta name="twitter:description" content="{{.Desc}}">
 </head>
 <body data-page="share" data-strings="{{.L.StringsJS}}" data-sw="{{.SW}}" data-track="{{.TrackJSON}}">
+{{template "icons"}}
+{{with .J.CoverSm}}<div class="ambient page" aria-hidden="true"><img src="{{.}}" alt=""></div>{{end}}
 <header class="top">
-  <a class="brand" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22c4-10 8-10 12 0s8 10 12 0" /></svg>{{.L.S.siteName}}</a>
-  {{if not .Unlisted}}<a class="back" href="/">{{.L.S.allTracks}} →</a>{{end}}
+  <a class="wordmark" href="/">{{.L.S.siteName}}</a>
+  {{if not .Unlisted}}<a class="back" href="/">{{.L.S.allTracks}}</a>{{end}}
 </header>
 <main class="share">
   <div class="hero">
@@ -50,19 +52,30 @@
       </audio>{{end}}
     </div>
     <div class="hero-text">
+      <p class="eyebrow">{{.L.S.track}}{{with .T.Style}} · {{.}}{{end}}</p>
       <h1>{{.T.Title}}</h1>
-      <p class="hero-sub">{{with .T.Style}}<span>{{.}}</span>{{end}}{{with .T.Date}}<span>{{.}}</span>{{end}}{{with .Duration}}<span>{{.}}</span>{{end}}</p>
-      {{with .T.Description}}<p class="hero-desc">{{.}}</p>{{end}}
-      <div class="hero-actions">
-        <button type="button" class="btn" id="share-btn" hidden>{{.L.S.share}}</button>
-        <button type="button" class="btn ghost" id="qr-btn" hidden>{{.L.S.qr}}</button>
-        <span class="verify" id="verify" hidden></span>
+      <p class="meta">{{with .Created}}{{.}}{{else}}{{.Published}}{{end}}{{with .Duration}} · {{.}}{{end}}</p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="hero-play"><svg><use href="#i-play"/></svg><span>{{.L.S.play}}</span></button>
+        <button type="button" class="ib round heart" id="like-btn" aria-label="{{.L.S.like}}" aria-pressed="false" title="{{.L.S.like}}" hidden><svg class="line"><use href="#i-heart"/></svg></button>
+        <button type="button" class="ib round" id="share-btn" aria-label="{{.L.S.share}}" title="{{.L.S.share}}" hidden><svg class="line"><use href="#i-share"/></svg></button>
+        <button type="button" class="ib round" id="qr-btn" aria-label="{{.L.S.qr}}" title="{{.L.S.qr}}" hidden><svg class="line"><use href="#i-qr"/></svg></button>
       </div>
+      <p class="counts" id="share-counts"><span>{{.Stats.Plays}} {{.PlaysWord}}</span><span>{{.Stats.Likes}} {{.LikesWord}}</span></p>
+      {{with .T.Description}}<p class="hero-desc">{{.}}</p>{{end}}
+      <dl class="specs">
+        {{with .Created}}<div><dt>{{$.L.S.created}}</dt><dd>{{.}}</dd></div>{{end}}
+        {{with .Published}}<div><dt>{{$.L.S.published}}</dt><dd>{{.}}</dd></div>{{end}}
+        {{with .Duration}}<div><dt>{{$.L.S.length}}</dt><dd>{{.}}</dd></div>{{end}}
+        {{with .T.Style}}<div><dt>{{$.L.S.styleLabel}}</dt><dd>{{.}}</dd></div>{{end}}
+      </dl>
+      <p class="verify" id="verify" hidden></p>
       {{with .T.Lyrics}}<details class="hero-lyrics"><summary>{{$.L.S.lyrics}}</summary><pre>{{.}}</pre></details>{{end}}
     </div>
   </div>
-  <dialog id="qr-dialog" class="qr-dialog"><canvas id="qr-canvas" width="320" height="320"></canvas><p class="qr-url">{{.ShareURL}}</p><button type="button" class="btn" id="qr-close">{{.L.S.close}}</button></dialog>
+  <dialog id="qr-dialog" class="qr-dialog"><canvas id="qr-canvas" width="320" height="320"></canvas><p class="qr-url">{{.ShareURL}}</p><button type="button" class="btn primary" id="qr-close">{{.L.S.close}}</button></dialog>
 </main>
+{{template "foot" .L}}
 {{template "playerbar" .L}}
 </body>
 </html>

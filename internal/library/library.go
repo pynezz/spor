@@ -33,7 +33,8 @@ type Asset struct {
 type Track struct {
 	Slug        string
 	Title       string
-	Date        string
+	Date        string // published, YYYY-MM-DD
+	Created     string // originally made: YYYY, YYYY-MM or YYYY-MM-DD
 	Style       string
 	Description string
 	Visibility  string

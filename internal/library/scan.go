@@ -460,7 +460,7 @@ func applyMeta(t *Track, name string, b []byte) error {
 		return err
 	}
 	for key, dst := range map[string]*string{
-		"title": &t.Title, "date": &t.Date, "style": &t.Style,
+		"title": &t.Title, "date": &t.Date, "created": &t.Created, "style": &t.Style,
 		"description": &t.Description, "visibility": &t.Visibility, "token": &t.Token,
 	} {
 		if err := str(key, dst); err != nil {

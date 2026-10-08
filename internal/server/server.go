@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -49,8 +50,7 @@ type Server struct {
 	strs     map[string]map[string]string
 	strsRaw  map[string]string
 	limiter  *limiter
-	playMu   sync.Mutex
-	plays    *os.File
+	stats    *stats
 }
 
 type snapshot struct {
@@ -93,16 +93,23 @@ func New(cfg Config, keys map[string]ed25519.PublicKey, log *slog.Logger) (*Serv
 	if err := s.loadAssets(); err != nil {
 		return nil, err
 	}
+	var playPath, likePath string
 	if cfg.PlayLog {
+		playPath = filepath.Join(cfg.Cache, "plays.log")
+	}
+	if cfg.Likes {
+		likePath = filepath.Join(cfg.Cache, "likes.log")
+	}
+	if playPath != "" || likePath != "" {
 		if err := os.MkdirAll(cfg.Cache, 0o755); err != nil {
 			return nil, err
 		}
-		f, err := os.OpenFile(filepath.Join(cfg.Cache, "plays.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-		if err != nil {
-			return nil, err
-		}
-		s.plays = f
 	}
+	st, err := openStats(playPath, likePath)
+	if err != nil {
+		return nil, err
+	}
+	s.stats = st
 	if err := s.Rescan(); err != nil {
 		return nil, err
 	}
@@ -244,6 +251,8 @@ func ctypeFor(name string) string {
 		return "image/png"
 	case ".woff2":
 		return "font/woff2"
+	case ".txt":
+		return "text/plain; charset=utf-8"
 	}
 	return "application/octet-stream"
 }
@@ -257,6 +266,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sig/{slug}", s.handleSig)
 	mux.HandleFunc("GET /api/keys", s.handleKeys)
 	mux.HandleFunc("POST /api/play/{slug}", s.handlePlay)
+	mux.HandleFunc("POST /api/like/{slug}", s.handleLike)
+	mux.HandleFunc("GET /api/stats", s.handleStats)
+	mux.HandleFunc("GET /api/stats/{slug}", s.handleTrackStats)
 	mux.HandleFunc("GET /m/{file}", s.handleMedia)
 	mux.HandleFunc("GET /c/{file}", s.handleCover)
 	mux.HandleFunc("GET /p/{file}", s.handlePeaks)
@@ -287,36 +299,15 @@ func (s *Server) secure(next http.Handler) http.Handler {
 	})
 }
 
-// pickLang implements the Accept-Language rule from the plan: the preferred
-// language decides; nb, no and nn map to nb, anything else to en-US. With no
-// header at all we default to nb.
-func pickLang(header string) string {
-	best, bestQ := "", -1.0
-	for _, part := range strings.Split(header, ",") {
-		tag, params, _ := strings.Cut(strings.TrimSpace(part), ";")
-		tag = strings.ToLower(strings.TrimSpace(tag))
-		if tag == "" {
-			continue
-		}
-		q := 1.0
-		if v, ok := strings.CutPrefix(strings.TrimSpace(params), "q="); ok {
-			if f, err := strconv.ParseFloat(v, 64); err == nil {
-				q = f
-			}
-		}
-		if q > bestQ {
-			best, bestQ = tag, q
-		}
+// pickLang returns the page language. spor is made for a Norwegian
+// audience, so it is always Norwegian (bokmål) unless the URL asks for
+// English with ?lang=en.
+func pickLang(query string) string {
+	switch strings.ToLower(query) {
+	case "en", "en-us", "en-gb":
+		return "en-US"
 	}
-	if best == "" || best == "*" {
-		return "nb"
-	}
-	primary, _, _ := strings.Cut(best, "-")
-	switch primary {
-	case "nb", "no", "nn":
-		return "nb"
-	}
-	return "en-US"
+	return "nb"
 }
 
 type langCtx struct {
@@ -324,11 +315,22 @@ type langCtx struct {
 	OGLocale  string
 	S         map[string]string
 	StringsJS string
+	SwitchURL string // same page in the other language
 }
 
 func (s *Server) lang(r *http.Request) langCtx {
-	l := pickLang(r.Header.Get("Accept-Language"))
+	l := pickLang(r.URL.Query().Get("lang"))
 	lc := langCtx{Lang: l, S: s.strs[l], StringsJS: s.strsRaw[l]}
+	q := r.URL.Query()
+	if l == "nb" {
+		q.Set("lang", "en")
+	} else {
+		q.Del("lang")
+	}
+	lc.SwitchURL = r.URL.Path
+	if enc := q.Encode(); enc != "" {
+		lc.SwitchURL += "?" + enc
+	}
 	if l == "nb" {
 		lc.OGLocale = "nb_NO"
 	} else {
@@ -361,7 +363,6 @@ func (s *Server) render(w http.ResponseWriter, name string, data any) {
 	h := w.Header()
 	h.Set("Content-Type", "text/html; charset=utf-8")
 	h.Set("Cache-Control", "no-cache")
-	h.Add("Vary", "Accept-Language")
 	w.Write(buf.Bytes())
 }
 
@@ -385,7 +386,6 @@ func (s *Server) lookup(r *http.Request) (*library.Track, string) {
 func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 	lc := s.lang(r)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Header().Add("Vary", "Accept-Language")
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte(lc.S["notFound"] + "\n"))
 }
@@ -418,6 +418,7 @@ func (s *Server) handleShare(w http.ResponseWriter, r *http.Request) {
 			ogAudio = &a
 		}
 	}
+	st := s.stats.get(t.Slug, "")
 	data := map[string]any{
 		"OGAudio":   ogAudio,
 		"L":         lc,
@@ -430,6 +431,11 @@ func (s *Server) handleShare(w http.ResponseWriter, r *http.Request) {
 		"SW":        s.swURL(),
 		"Unlisted":  token != "",
 		"Duration":  fmtDuration(t.Duration),
+		"Published": fmtDate(lc.Lang, t.Date),
+		"Created":   fmtDate(lc.Lang, t.Created),
+		"Stats":     st,
+		"PlaysWord": plural(lc.S, "plays", st.Plays),
+		"LikesWord": plural(lc.S, "likes", st.Likes),
 	}
 	s.render(w, "share.html", data)
 }
@@ -452,6 +458,7 @@ type trackJSON struct {
 	Slug        string       `json:"slug"`
 	Title       string       `json:"title"`
 	Date        string       `json:"date,omitempty"`
+	Created     string       `json:"created,omitempty"`
 	Style       string       `json:"style,omitempty"`
 	Description string       `json:"description,omitempty"`
 	Duration    float64      `json:"duration,omitempty"`
@@ -474,7 +481,7 @@ func src(a *library.Asset) sourceJSON {
 
 func (s *Server) trackJSON(t *library.Track, token string) trackJSON {
 	j := trackJSON{
-		Slug: t.Slug, Title: t.Title, Date: t.Date, Style: t.Style,
+		Slug: t.Slug, Title: t.Title, Date: t.Date, Created: t.Created, Style: t.Style,
 		Description: t.Description, Duration: round1(t.Duration),
 		Width: t.Width, Height: t.Height, Lyrics: t.Lyrics, Key: t.KeyID,
 		Audio: []sourceJSON{},
@@ -580,16 +587,83 @@ func (s *Server) handlePlay(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	if s.plays != nil {
-		line := time.Now().UTC().Format(time.RFC3339) + " " + t.Slug + "\n"
-		s.playMu.Lock()
-		_, err := s.plays.WriteString(line)
-		s.playMu.Unlock()
-		if err != nil {
-			s.log.Warn("play log", "err", err)
-		}
+	if err := s.stats.play(t.Slug); err != nil {
+		s.log.Warn("play log", "err", err)
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// session returns the hashed like session from the X-Spor-Session header,
+// or "" if absent or malformed.
+func session(r *http.Request) string {
+	h, _ := sessionHash(r.Header.Get("X-Spor-Session"))
+	return h
+}
+
+func writeJSON(w http.ResponseWriter, code int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(v)
+}
+
+// handleLike adds one like per session and track. 200 with the new count,
+// 409 with the current count if this session already liked the track.
+func (s *Server) handleLike(w http.ResponseWriter, r *http.Request) {
+	if s.stats.likeF == nil {
+		http.NotFound(w, r)
+		return
+	}
+	if !s.limiter.allow(s.clientIP(r)) {
+		http.Error(w, "slow down", http.StatusTooManyRequests)
+		return
+	}
+	t, _ := s.lookup(r)
+	if t == nil {
+		s.notFound(w, r)
+		return
+	}
+	sess := session(r)
+	if sess == "" {
+		http.Error(w, "missing or malformed X-Spor-Session", http.StatusBadRequest)
+		return
+	}
+	n, err := s.stats.like(t.Slug, sess)
+	switch {
+	case errors.Is(err, errLiked):
+		writeJSON(w, http.StatusConflict, trackStats{Plays: s.stats.get(t.Slug, "").Plays, Likes: n, Liked: true})
+	case err != nil:
+		s.log.Warn("like log", "err", err)
+		http.Error(w, "could not save", http.StatusInternalServerError)
+	default:
+		writeJSON(w, http.StatusOK, trackStats{Plays: s.stats.get(t.Slug, "").Plays, Likes: n, Liked: true})
+	}
+}
+
+// handleStats returns counts for every public track, with "liked" set for
+// the tracks the requesting session has liked.
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	sess := session(r)
+	out := map[string]trackStats{}
+	for _, t := range s.snap.Load().idx.Tracks {
+		if t.Visibility == library.Public {
+			out[t.Slug] = s.stats.get(t.Slug, sess)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tracks": out, "likes": s.stats.likeF != nil})
+}
+
+// handleTrackStats returns the counts for one track (unlisted with ?k=).
+func (s *Server) handleTrackStats(w http.ResponseWriter, r *http.Request) {
+	t, _ := s.lookup(r)
+	if t == nil {
+		s.notFound(w, r)
+		return
+	}
+	writeJSON(w, http.StatusOK, struct {
+		trackStats
+		LikesOn bool `json:"likesOn"`
+	}{s.stats.get(t.Slug, session(r)), s.stats.likeF != nil})
 }
 
 func (s *Server) handleMedia(w http.ResponseWriter, r *http.Request) {
@@ -693,7 +767,5 @@ func (s *Server) handleSW(w http.ResponseWriter, r *http.Request) {
 
 // Close releases resources.
 func (s *Server) Close() {
-	if s.plays != nil {
-		s.plays.Close()
-	}
+	s.stats.close()
 }

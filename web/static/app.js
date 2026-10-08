@@ -11,6 +11,21 @@
     set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
   };
 
+  const lang = root.lang || 'nb';
+  const num = new Intl.NumberFormat(lang === 'nb' ? 'nb-NO' : 'en-US');
+  const months = { nb: ['jan.', 'feb.', 'mars', 'apr.', 'mai', 'juni', 'juli', 'aug.', 'sep.', 'okt.', 'nov.', 'des.'] };
+  // YYYY, YYYY-MM or YYYY-MM-DD as "12. mars 2019" / "Mar 12, 2019"; other text as is.
+  function fmtDate(d) {
+    const m = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(d || '');
+    if (!m) return d || '';
+    if (!m[2]) return m[1];
+    const mo = +m[2] - 1;
+    if (lang === 'nb') return (m[3] ? +m[3] + '. ' : '') + months.nb[mo] + ' ' + m[1];
+    const dt = new Date(Date.UTC(+m[1], mo, +(m[3] || 1)));
+    return dt.toLocaleDateString('en-US', m[3] ? { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' } : { year: 'numeric', month: 'short', timeZone: 'UTC' });
+  }
+  const plural = (key, n) => S[key + (n === 1 ? '1' : 'N')] || '';
+
   const fmt = (s) => {
     s = isFinite(s) && s > 0 ? Math.floor(s) : 0;
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
@@ -51,7 +66,9 @@
   let counted = false;
   let dragPos = null;
   let videoView = true;
-  let accent = '#f5a65b';
+  const css = getComputedStyle(root);
+  const waveRest = css.getPropertyValue('--wave-rest').trim() || '#3a3a41';
+  const wavePlayed = css.getPropertyValue('--wave-played').trim() || '#f6f4ef';
 
   const player = $('player');
   const canvas = $('pl-canvas');
@@ -67,56 +84,6 @@
     media.playsInline = true;
     media.preload = 'metadata';
     $('stage').append(media);
-  }
-
-  /* ---------- accent colour from cover ---------- */
-  function rgb2hsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    let h = 0, s = 0;
-    const l = (mx + mn) / 2;
-    if (mx !== mn) {
-      const d = mx - mn;
-      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
-      if (mx === r) h = (g - b) / d + (g < b ? 6 : 0);
-      else if (mx === g) h = (b - r) / d + 2;
-      else h = (r - g) / d + 4;
-      h /= 6;
-    }
-    return [h, s, l];
-  }
-  function hsl2rgb(h, s, l) {
-    const f = (n) => {
-      const k = (n + h * 12) % 12;
-      const a = s * Math.min(l, 1 - l);
-      return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
-    };
-    return [f(0), f(8), f(4)];
-  }
-  function accentFrom(url) {
-    if (!url) return;
-    const img = new Image();
-    img.onload = () => {
-      const c = document.createElement('canvas');
-      c.width = c.height = 16;
-      const x = c.getContext('2d', { willReadFrequently: true });
-      x.drawImage(img, 0, 0, 16, 16);
-      const d = x.getImageData(0, 0, 16, 16).data;
-      let r = 0, g = 0, b = 0, n = 0;
-      for (let i = 0; i < d.length; i += 4) {
-        const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
-        const w = 1 + ((mx - mn) / 32) ** 2; // favour colourful pixels over grey
-        r += d[i] * w; g += d[i + 1] * w; b += d[i + 2] * w; n += w;
-      }
-      let [h, s, l] = rgb2hsl(r / n, g / n, b / n);
-      s = Math.max(s, 0.45);
-      l = Math.min(Math.max(l, 0.62), 0.74);
-      const [R, G, Bl] = hsl2rgb(h, s, l);
-      accent = `rgb(${R}, ${G}, ${Bl})`;
-      root.style.setProperty('--accent', accent);
-      draw();
-    };
-    img.src = url;
   }
 
   /* ---------- waveform ---------- */
@@ -136,15 +103,14 @@
     const dur = duration();
     const pos = dragPos != null ? dragPos : media.currentTime;
     const p = dur ? Math.min(1, pos / dur) : 0;
-    const mute = '#3b3f4b';
     if (!peaks) {
       const y = H / 2 - 1.5 * d;
-      ctx.fillStyle = mute;
+      ctx.fillStyle = waveRest;
       ctx.fillRect(0, y, W, 3 * d);
-      ctx.fillStyle = accent;
+      ctx.fillStyle = wavePlayed;
       ctx.fillRect(0, y, W * p, 3 * d);
     } else {
-      const bw = 2 * d, gap = 1.2 * d;
+      const bw = 1.6 * d, gap = 1.6 * d;
       const n = Math.max(1, Math.floor(W / (bw + gap)));
       const bins = peaks.length / 2;
       for (let i = 0; i < n; i++) {
@@ -154,7 +120,7 @@
         for (let j = a; j < b; j++) amp = Math.max(amp, -peaks[2 * j], peaks[2 * j + 1]);
         const h = Math.max(2 * d, (amp / peakMax) * H * 0.94);
         const x = i * (bw + gap);
-        ctx.fillStyle = x / W < p ? accent : mute;
+        ctx.fillStyle = x / W < p ? wavePlayed : waveRest;
         ctx.fillRect(x, (H - h) / 2, bw, h);
       }
     }
@@ -216,7 +182,7 @@
   }
 
   function sub(t) {
-    return [t.style, t.date, t.duration ? fmt(t.duration) : ''].filter(Boolean).join(' · ');
+    return [t.style, fmtDate(t.created || t.date)].filter(Boolean).join(' · ');
   }
 
   function load(i, autoplay) {
@@ -240,7 +206,7 @@
     $('pl-video').hidden = !t.video;
     setVideoView(t.video ? videoView : false);
     document.querySelectorAll('.card').forEach((c) => c.classList.toggle('current', +c.dataset.i === i));
-    accentFrom(t.coverSm);
+    showLike(t);
     loadPeaks(t);
     session(t);
     if (autoplay) play();
@@ -269,6 +235,15 @@
     player.classList.toggle('playing', on);
     playBtn.setAttribute('aria-label', on ? S.pause : S.play);
     document.querySelectorAll('.card').forEach((c) => c.classList.toggle('playing', on));
+    // The big "Play" buttons follow the player when they point at the current track.
+    for (const id of ['hero-play', 'feature-play']) {
+      const b = $(id);
+      if (!b) continue;
+      const mine = id === 'hero-play' || (list[0] && track === list[0]);
+      const playing = on && mine;
+      b.querySelector('use').setAttribute('href', playing ? '#i-pause' : '#i-play');
+      b.querySelector('span').textContent = playing ? S.pause : S.play;
+    }
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = on ? 'playing' : 'paused';
   }
 
@@ -290,6 +265,7 @@
         counted = true;
         const q = new URL(track.share, location.origin).search;
         try { navigator.sendBeacon('/api/play/' + encodeURIComponent(track.slug) + q); } catch { /* ignore */ }
+        if (track.stats) { track.stats.plays++; renderStats(track); }
         const n = (+store.get('spor.plays') || 0) + 1;
         store.set('spor.plays', String(n));
         if (n >= 3 && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
@@ -369,6 +345,139 @@
   });
   $('lyrics-close').addEventListener('click', () => { $('lyrics').hidden = true; $('pl-lyrics').classList.remove('on'); });
 
+  /* ---------- plays and likes ---------- */
+  // One like per browser session per track. The session id is random and
+  // lives in localStorage; the server keeps the same rule.
+  let sid = store.get('spor.sid');
+  if (!/^[0-9a-f]{32}$/.test(sid || '')) {
+    sid = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+    store.set('spor.sid', sid);
+  }
+  let likedSet;
+  try { likedSet = new Set(JSON.parse(store.get('spor.liked') || '[]')); } catch { likedSet = new Set(); }
+  const saveLiked = () => store.set('spor.liked', JSON.stringify([...likedSet]));
+  let likesOn = true;
+
+  const icon = (id, line) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    if (line) svg.setAttribute('class', 'line');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + id);
+    svg.setAttribute('aria-hidden', 'true');
+    svg.append(use);
+    return svg;
+  };
+  function countEl(id, n, word, cls) {
+    const s = document.createElement('span');
+    if (cls) s.className = cls;
+    s.title = num.format(n) + ' ' + word;
+    const v = document.createElement('span');
+    v.textContent = num.format(n);
+    const sr = document.createElement('span');
+    sr.className = 'sr';
+    sr.textContent = ' ' + word;
+    s.append(icon(id, id === 'i-heart'), v, sr);
+    return s;
+  }
+
+  function renderStats(t) {
+    const st = t.stats;
+    if (!st) return;
+    const el = document.querySelector(`.card[data-i="${list.indexOf(t)}"] .stats`);
+    if (el) {
+      const parts = [countEl('i-play', st.plays, plural('plays', st.plays))];
+      if (likesOn) parts.push(countEl('i-heart', st.likes, plural('likes', st.likes), st.liked ? 'liked' : ''));
+      el.replaceChildren(...parts);
+    }
+    const words = () => {
+      const out = [num.format(st.plays) + ' ' + plural('plays', st.plays)];
+      if (likesOn) out.push(num.format(st.likes) + ' ' + plural('likes', st.likes));
+      return out.map((w) => Object.assign(document.createElement('span'), { textContent: w }));
+    };
+    if (page === 'share') $('share-counts').replaceChildren(...words());
+    else if (t === list[0]) $('feature-counts').replaceChildren(...words());
+    if (t === track) showLike(t);
+    totals();
+  }
+
+  function totals() {
+    if (page === 'share' || !list.length) return;
+    let plays = 0, likes = 0;
+    for (const t of list) if (t.stats) { plays += t.stats.plays; likes += t.stats.likes; }
+    const parts = [num.format(list.length) + ' ' + plural('tracks', list.length), num.format(plays) + ' ' + plural('plays', plays)];
+    if (likesOn) parts.push(num.format(likes) + ' ' + plural('likes', likes));
+    $('totals').textContent = parts.join(' · ');
+  }
+
+  // The heart buttons that show track t.
+  function likeButtons(t) {
+    const out = [];
+    if (t === track) out.push($('pl-like'));
+    if (page === 'share') out.push($('like-btn'));
+    else if (t === list[0]) out.push($('feature-like'));
+    return out;
+  }
+
+  function showLike(t) {
+    const liked = !!(t.stats && t.stats.liked) || likedSet.has(t.slug);
+    const n = t.stats ? num.format(t.stats.likes) : '';
+    const set = (btn) => {
+      if (!btn) return;
+      btn.hidden = !likesOn;
+      btn.classList.toggle('on', liked);
+      btn.disabled = liked;
+      btn.setAttribute('aria-pressed', String(liked));
+      btn.title = liked ? S.liked : S.like;
+      btn.setAttribute('aria-label', (liked ? S.liked : S.like) + (n ? ` (${n})` : ''));
+    };
+    for (const b of likeButtons(t)) set(b);
+    if (t === track) $('pl-likes').textContent = likesOn && t.stats ? n + ' ' + plural('likes', t.stats.likes) : '';
+  }
+
+  async function like(t) {
+    if (!t || likedSet.has(t.slug) || (t.stats && t.stats.liked)) return;
+    // Disable straight away so double clicks send one request.
+    likedSet.add(t.slug);
+    showLike(t);
+    const q = new URL(t.share, location.origin).search;
+    try {
+      const r = await fetch('/api/like/' + encodeURIComponent(t.slug) + q, { method: 'POST', headers: { 'X-Spor-Session': sid } });
+      if (r.status !== 200 && r.status !== 409) throw new Error(r.status);
+      t.stats = await r.json();
+      saveLiked();
+      renderStats(t);
+      showLike(t);
+      for (const b of likeButtons(t)) {
+        if (b.hidden) continue;
+        b.classList.remove('pop');
+        void b.offsetWidth;
+        b.classList.add('pop');
+      }
+    } catch {
+      likedSet.delete(t.slug);
+      showLike(t);
+      toast(S.likeError);
+    }
+  }
+  $('pl-like').addEventListener('click', () => like(track));
+
+  async function loadStats() {
+    try {
+      const r = await fetch('/api/stats', { headers: { 'X-Spor-Session': sid } });
+      if (!r.ok) return;
+      const d = await r.json();
+      likesOn = d.likes !== false;
+      for (const t of list) {
+        const st = d.tracks && d.tracks[t.slug];
+        if (!st) continue;
+        if (likedSet.has(t.slug)) st.liked = true;
+        t.stats = st;
+        renderStats(t);
+      }
+      totals();
+    } catch { /* offline: no counts */ }
+  }
+
   /* ---------- sharing ---------- */
   async function share(t) {
     if (!t) return;
@@ -403,7 +512,17 @@
     const set = new Set(urls.map((u) => new URL(u, location.origin).pathname));
     list.forEach((t, i) => {
       const srcs = [...t.audio, t.video].filter(Boolean).map((s) => s.url);
-      if (srcs.some((u) => set.has(u))) document.querySelector(`.card[data-i="${i}"]`)?.classList.add('offline');
+      const c = document.querySelector(`.card[data-i="${i}"]`);
+      if (!c || c.classList.contains('offline') || !srcs.some((u) => set.has(u))) return;
+      c.classList.add('offline');
+      // Small "saved for offline" mark next to the title, labelled for hover and screen readers.
+      const mark = document.createElement('span');
+      mark.className = 'saved';
+      mark.title = S.offline;
+      mark.setAttribute('role', 'img');
+      mark.setAttribute('aria-label', S.offline);
+      mark.append(icon('i-saved', true));
+      c.querySelector('h3').append(mark);
     });
   }
 
@@ -441,14 +560,39 @@
     eq.className = 'eq';
     eq.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
     art.append(eq);
+    const go = document.createElement('span');
+    go.className = 'go';
+    go.append(icon('i-play'));
+    art.append(go);
     const h = document.createElement('h3');
     h.textContent = t.title;
     const p = document.createElement('p');
+    p.className = 'sub';
     p.textContent = sub(t);
-    btn.append(art, h, p);
-    btn.addEventListener('click', () => (i === cur ? toggle() : load(i, true)));
+    const st = document.createElement('p');
+    st.className = 'stats';
+    btn.append(art, h, p, st);
+    btn.addEventListener('click', () => playAt(i));
     li.append(btn);
     return li;
+  }
+
+  const playAt = (i) => (i === cur ? toggle() : load(i, true));
+
+  // The newest release gets the big slot at the top.
+  function feature(t) {
+    $('feature-title').textContent = t.title;
+    $('feature-meta').textContent = [t.style, fmtDate(t.created || t.date), t.duration ? fmt(t.duration) : ''].filter(Boolean).join(' · ');
+    if (t.coverLg) {
+      $('feature-img').src = t.coverLg;
+      $('feature-bg').src = t.coverSm || t.coverLg;
+    }
+    $('feature-play').addEventListener('click', () => playAt(0));
+    $('feature-cover').addEventListener('click', () => playAt(0));
+    $('feature-cover').setAttribute('aria-label', `${S.play}: ${t.title}`);
+    $('feature-like').addEventListener('click', () => like(t));
+    $('feature').hidden = false;
+    showLike(t);
   }
 
   async function initLibrary() {
@@ -464,9 +608,15 @@
     }
     $('empty').hidden = list.length > 0;
     grid.replaceChildren(...list.map(card));
+    if (list.length) {
+      feature(list[0]);
+      $('grid-head').hidden = false;
+      totals();
+    }
     const want = decodeURIComponent(location.hash.slice(1));
     const i = list.findIndex((t) => t.slug === want);
     if (i >= 0) load(i, false);
+    loadStats();
     swPost({ type: 'which', urls: list.flatMap((t) => [...t.audio, t.video].filter(Boolean).map((s) => s.url)) });
   }
 
@@ -505,7 +655,7 @@
       const served = [...t.audio, t.video].filter(Boolean).map((s) => s.url.slice(3, 67));
       ok = ok && served.every((h) => listed.has(h));
     } catch { ok = false; }
-    el.textContent = ok ? '✓ ' + S.verified : '✕ ' + S.unverified;
+    el.replaceChildren(icon(ok ? 'i-check' : 'i-close', true), document.createTextNode(ok ? S.verified : S.unverified));
     el.classList.add(ok ? 'ok' : 'bad');
   }
 
@@ -515,7 +665,14 @@
     load(0, false);
     const hc = $('hero-cover');
     if (hc) hc.addEventListener('click', toggle);
+    $('hero-play').addEventListener('click', toggle);
     if (!t.video) media.addEventListener('click', toggle);
+    $('like-btn').addEventListener('click', () => like(t));
+    showLike(t);
+    fetch('/api/stats/' + encodeURIComponent(t.slug) + new URL(t.share, location.origin).search, { headers: { 'X-Spor-Session': sid } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then((st) => { likesOn = st.likesOn !== false; if (likedSet.has(t.slug)) st.liked = true; t.stats = st; renderStats(t); })
+      .catch(() => { likesOn = false; showLike(t); });
     $('share-btn').hidden = false;
     $('share-btn').addEventListener('click', () => share(t));
     if (window.QR && $('qr-dialog').showModal) {

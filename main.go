@@ -49,7 +49,8 @@ Environment:
   SPOR_REMOTE   rsync target for publish, e.g. vps:/srv/spor/library
   SPOR_RELOAD   remote command run over ssh after publish
                 (default: systemctl kill -s HUP spor.service)
-  SPOR_URL      public base URL    (default https://lytt.txtv.no)
+  SPOR_URL      base URL for printed share links (default https://lytt.txtv.no);
+                signatures cover file hashes only, so changing it changes nothing on disk
 `
 
 func main() {
@@ -252,7 +253,7 @@ func signFlags(name string, args []string) (signOpts, []string) {
 	}
 	fs.BoolVar(&o.force, "force", false, "re-sign even if nothing changed")
 	fs.BoolVar(&o.ingest, "ingest", true, "generate peaks.bin and a video cover with ffmpeg when missing")
-	fs.StringVar(&o.baseURL, "url", envOr("SPOR_URL", "https://lytt.txtv.no"), "public base URL for printed links")
+	fs.StringVar(&o.baseURL, "url", envOr("SPOR_URL", "https://lytt.txtv.no"), "base URL for the share link printed after signing (not part of the signature)")
 	fs.Parse(args)
 	return o, fs.Args()
 }
@@ -571,7 +572,7 @@ func cmdPublish(args []string) error {
 	keyPath := fs.String("key", envOr("SPOR_KEY", filepath.Join(configDir(), "spor.key")), "private key file")
 	remote := fs.String("remote", os.Getenv("SPOR_REMOTE"), "rsync target library, e.g. vps:/srv/spor/library")
 	reload := fs.String("reload", envOr("SPOR_RELOAD", "systemctl kill -s HUP spor.service"), "command run on the remote host after upload; empty to skip")
-	baseURL := fs.String("url", envOr("SPOR_URL", "https://lytt.txtv.no"), "public base URL")
+	baseURL := fs.String("url", envOr("SPOR_URL", "https://lytt.txtv.no"), "base URL for the printed share link (not part of the signature)")
 	fs.Parse(args)
 	if fs.NArg() != 1 || *remote == "" {
 		return errors.New("usage: spor publish -remote HOST:/srv/spor/library DIR (or set SPOR_REMOTE)")

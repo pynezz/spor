@@ -16,7 +16,8 @@ const LRU_KEY = '/__spor/lru';
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(SHELL)
-      .then((c) => c.addAll(['app.js', 'qr.js', 'app.css', 'icon.svg', 'app.webmanifest'].map((f) => `/static/${V}/${f}`)))
+      .then((c) => c.addAll(['app.js', 'qr.js', 'app.css', 'icon.svg', 'app.webmanifest',
+        'fonts/inter-400.woff2', 'fonts/inter-500.woff2', 'fonts/inter-600.woff2', 'fonts/inter-tight-600.woff2', 'fonts/inter-tight-700.woff2'].map((f) => `/static/${V}/${f}`)))
       .then(() => self.skipWaiting()),
   );
 });

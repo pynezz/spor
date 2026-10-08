@@ -15,7 +15,8 @@ cp ~/Downloads/neon-fjord.mp3 library/neon-fjord/track.mp3
 cp ~/Downloads/cover.jpg      library/neon-fjord/cover.jpg
 cat > library/neon-fjord/meta.toml <<'EOF'
 title = "Neon Fjord"
-date = "2026-09-30"
+date = "2026-09-30"        # published
+created = "2024-05"        # originally made: YYYY, YYYY-MM or YYYY-MM-DD (optional)
 style = "synthwave"
 description = "First one out."
 visibility = "public"   # public | unlisted | draft
@@ -29,6 +30,14 @@ Publish in one step (sign, rsync, SIGHUP, print the share link):
 ```sh
 export SPOR_REMOTE=root@vps:/srv/spor/library
 spor publish library/neon-fjord
+```
+
+Or let `scripts/add-track.sh` do all of it from a single file. It reads title, genre and the original creation date from the tags (the publish date is today), takes the cover from an image next to the file or the embedded artwork, transcodes WAV/AIFF to opus + mp3, writes `meta.toml` and signs:
+
+```sh
+scripts/add-track.sh ~/Downloads/neon-fjord.mp3                  # -> library/<slug from title>, signed
+scripts/add-track.sh -s synthwave -v unlisted -p ~/Exports/demo.wav   # -p: publish to $SPOR_REMOTE
+scripts/add-track.sh -h                                          # all options (title, slug, cover, lyrics, ...)
 ```
 
 ## Track directory
@@ -63,6 +72,10 @@ The server only needs the **public** key. It verifies once at scan time and cach
 | `/api/sig/<slug>`, `/api/keys` | manifest and public keys for in-browser verification |
 | `/m/…`, `/c/…`, `/p/…` | media, cover thumbnails (320/1200), waveform peaks |
 | `POST /api/play/<slug>` | append-only play log (`cache/plays.log`, no IPs, no cookies) |
+| `POST /api/like/<slug>` | thumbs up; header `X-Spor-Session: <32 hex>`; 409 if that session already liked it (`cache/likes.log`) |
+| `GET /api/stats`, `/api/stats/<slug>` | play and like counts, `liked` for the requesting session |
+
+The site is Norwegian (bokmål) for everyone, crawlers included; `?lang=en` gives the English strings. Likes are one per browser session per track: the browser keeps a random session id in `localStorage` and the server stores a hash of it. That stops double clicks, not someone determined to inflate a count. Set `likes = false` to turn them off.
 
 ## Deploy (AlmaLinux VPS, native)
 
@@ -81,3 +94,4 @@ Or download a binary from Releases and run `install.sh`'s steps by hand. Add `de
 - **systemd unit instead of Quadlet**, since the VPS builds and runs the binary natively.
 - **`peaks.bin` and the video cover are made at sign time** on the workstation and signed with everything else, so the server does not need ffmpeg. If ffmpeg is on the server, it fills in missing peaks and covers itself.
 - Config and `meta.toml` use a tiny built-in flat-TOML parser, so there are still zero dependencies.
+- Fonts are bundled (Inter, Inter Tight; SIL OFL, licenses in `web/static/fonts/`) because the CSP allows no third-party origins.

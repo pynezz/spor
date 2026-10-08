@@ -3,3 +3,5 @@
 *.key
 /library/
 /cache/
+/dev-keys/
+/vps-deploy-key*

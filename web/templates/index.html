@@ -12,17 +12,35 @@
 <meta property="og:locale" content="{{.L.OGLocale}}">
 </head>
 <body data-page="library" data-strings="{{.L.StringsJS}}" data-sw="{{.SW}}">
+{{template "icons"}}
 <header class="top">
-  <a class="brand" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22c4-10 8-10 12 0s8 10 12 0" /></svg>{{.L.S.siteName}}</a>
+  <a class="wordmark" href="/">{{.L.S.siteName}}</a>
   <p class="tagline">{{.L.S.tagline}}</p>
 </header>
+<section id="feature" class="feature" hidden aria-labelledby="feature-title">
+  <div class="ambient" aria-hidden="true"><img id="feature-bg" alt=""></div>
+  <div class="feature-in">
+    <button type="button" class="feature-cover" id="feature-cover"><img id="feature-img" alt=""></button>
+    <div class="feature-text">
+      <p class="eyebrow">{{.L.S.latest}}</p>
+      <h1 id="feature-title"></h1>
+      <p class="meta" id="feature-meta"></p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="feature-play"><svg><use href="#i-play"/></svg><span>{{.L.S.play}}</span></button>
+        <button type="button" class="ib round heart" id="feature-like" aria-label="{{.L.S.like}}" aria-pressed="false" hidden><svg class="line"><use href="#i-heart"/></svg></button>
+        <span class="counts" id="feature-counts"></span>
+      </div>
+    </div>
+  </div>
+</section>
 <main>
   <noscript><p class="note">{{.L.S.noJs}}</p></noscript>
   <section id="stage" class="stage" hidden></section>
+  <div class="section-head" id="grid-head" hidden><h2>{{.L.S.allTracks}}</h2><span class="totals" id="totals"></span></div>
   <ul id="grid" class="grid" aria-label="{{.L.S.library}}"></ul>
   <p id="empty" class="note" hidden>{{.L.S.empty}}</p>
-  <p class="keys">{{.L.S.keys}}</p>
 </main>
+{{template "foot" .L}}
 {{template "playerbar" .L}}
 </body>
 </html>

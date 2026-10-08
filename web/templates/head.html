@@ -1,27 +1,50 @@
 {{define "head"}}<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0d0e12">
+<meta name="theme-color" content="#000000">
+<link rel="preload" href="{{static "fonts/inter-400.woff2"}}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{static "fonts/inter-tight-700.woff2"}}" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="{{static "icon.svg"}}" type="image/svg+xml">
 <link rel="manifest" href="{{static "app.webmanifest"}}">
 <link rel="stylesheet" href="{{static "app.css"}}">
 <script src="{{static "qr.js"}}" defer></script>
 <script src="{{static "app.js"}}" defer></script>{{end}}
 
+{{define "icons"}}<svg class="defs" aria-hidden="true"><defs>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M6.5 4h3.5v16H6.5zM14 4h3.5v16H14z"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.6s-7.6-4.6-9.2-9.4C1.6 7.6 3.9 4.2 7.4 4.2c2 0 3.6 1.1 4.6 2.7 1-1.6 2.6-2.7 4.6-2.7 3.5 0 5.8 3.4 4.6 7-1.6 4.8-9.2 9.4-9.2 9.4z"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8M5 12.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-6.5"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 18.5h2M18.5 14H20"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-lyrics" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></symbol>
+<symbol id="i-video" viewBox="0 0 24 24"><path d="M3.5 6.5h12v11h-12zM15.5 10.5l5-3v9l-5-3"/></symbol>
+<symbol id="i-saved" viewBox="0 0 24 24"><path d="M12 4v10.5M7.5 10 12 14.5 16.5 10M5.5 19.5h13"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+</defs></svg>{{end}}
+
 {{define "playerbar"}}<div id="player" class="player" hidden>
-  <button class="pl-cover" id="pl-cover" type="button" aria-label="{{.S.video}}"><img id="pl-img" alt=""></button>
-  <div class="pl-meta"><div class="pl-title" id="pl-title"></div><div class="pl-sub" id="pl-sub"></div></div>
-  <div class="pl-ctrl">
-    <button type="button" class="ib" id="pl-prev" aria-label="{{.S.prev}}" title="{{.S.prev}} (K)"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
-    <button type="button" class="ib big" id="pl-play" aria-label="{{.S.play}}" title="{{.S.play}} (␣)"><svg viewBox="0 0 24 24" class="i-play"><path d="M7 4v16l13-8z"/></svg><svg viewBox="0 0 24 24" class="i-pause"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
-    <button type="button" class="ib" id="pl-next" aria-label="{{.S.next}}" title="{{.S.next}} (J)"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+  <div class="pl-left">
+    <button class="pl-cover" id="pl-cover" type="button" aria-label="{{.S.video}}"><img id="pl-img" alt=""></button>
+    <div class="pl-meta"><div class="pl-title" id="pl-title"></div><div class="pl-sub" id="pl-sub"></div></div>
+    <button type="button" class="ib heart" id="pl-like" aria-label="{{.S.like}}" aria-pressed="false" title="{{.S.like}}" hidden><svg class="line"><use href="#i-heart"/></svg></button>
   </div>
-  <div class="pl-wave"><span class="pl-time" id="pl-cur">0:00</span><canvas id="pl-canvas" role="slider" tabindex="0" aria-label="{{.S.seek}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></canvas><span class="pl-time" id="pl-dur">0:00</span></div>
+  <div class="pl-center">
+    <div class="pl-ctrl">
+      <button type="button" class="ib" id="pl-prev" aria-label="{{.S.prev}}" title="{{.S.prev}} (K)"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14L9 12z"/></svg></button>
+      <button type="button" class="ib big" id="pl-play" aria-label="{{.S.play}}" title="{{.S.play}} (␣)"><svg class="i-play"><use href="#i-play"/></svg><svg class="i-pause"><use href="#i-pause"/></svg></button>
+      <button type="button" class="ib" id="pl-next" aria-label="{{.S.next}}" title="{{.S.next}} (J)"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM5 5v14l10-7z"/></svg></button>
+    </div>
+    <div class="pl-wave"><span class="pl-time" id="pl-cur">0:00</span><canvas id="pl-canvas" role="slider" tabindex="0" aria-label="{{.S.seek}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></canvas><span class="pl-time" id="pl-dur">0:00</span></div>
+  </div>
   <div class="pl-extra">
-    <button type="button" class="ib sm" id="pl-video" aria-label="{{.S.video}}" title="{{.S.video}}" hidden><svg viewBox="0 0 24 24"><path d="M3 6h13v12H3zM17 10l4-3v10l-4-3z"/></svg></button>
-    <button type="button" class="ib sm" id="pl-lyrics" aria-label="{{.S.lyrics}}" title="{{.S.lyrics}}" hidden><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg></button>
-    <button type="button" class="ib sm" id="pl-share" aria-label="{{.S.share}}" title="{{.S.share}}"><svg viewBox="0 0 24 24"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7l-6.7 3.4a3 3 0 1 0 0 3.2L15 17a3 3 0 1 0 3-1z"/></svg></button>
+    <span class="pl-likes" id="pl-likes" aria-hidden="true"></span>
+    <button type="button" class="ib sm" id="pl-video" aria-label="{{.S.video}}" title="{{.S.video}}" hidden><svg class="line"><use href="#i-video"/></svg></button>
+    <button type="button" class="ib sm" id="pl-lyrics" aria-label="{{.S.lyrics}}" title="{{.S.lyrics}}" hidden><svg class="line"><use href="#i-lyrics"/></svg></button>
+    <button type="button" class="ib sm" id="pl-share" aria-label="{{.S.share}}" title="{{.S.share}}"><svg class="line"><use href="#i-share"/></svg></button>
   </div>
 </div>
-<aside id="lyrics" class="lyrics" hidden><button type="button" class="ib sm close" id="lyrics-close" aria-label="{{.S.close}}">✕</button><h2>{{.S.lyrics}}</h2><pre id="lyrics-text"></pre></aside>
+<aside id="lyrics" class="lyrics" hidden><button type="button" class="ib sm close" id="lyrics-close" aria-label="{{.S.close}}"><svg class="line"><use href="#i-close"/></svg></button><p class="eyebrow">{{.S.lyrics}}</p><pre id="lyrics-text"></pre></aside>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>{{end}}
+
+{{define "foot"}}<footer class="foot"><span class="wordmark small">{{.S.siteName}}</span><p class="keys">{{.S.keys}}</p><p><a href="{{.SwitchURL}}" hreflang="{{if eq .Lang "nb"}}en{{else}}nb{{end}}">{{.S.otherLang}}</a></p></footer>{{end}}

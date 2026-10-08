@@ -24,6 +24,7 @@ type Config struct {
 	MediaRate      float64 // media requests per second per IP
 	MediaBurst     int
 	PlayLog        bool
+	Likes          bool
 }
 
 // DefaultConfig returns defaults matching the plan.
@@ -39,6 +40,7 @@ func DefaultConfig() Config {
 		MediaRate:      10,
 		MediaBurst:     60,
 		PlayLog:        true,
+		Likes:          true,
 	}
 }
 
@@ -63,7 +65,7 @@ func LoadConfig(path string) (Config, error) {
 	var keys, interval string
 	str("public_keys", &keys)
 	str("rescan_interval", &interval)
-	known["sw_cache_limit_mb"], known["trust_proxy"], known["media_rate"], known["media_burst"], known["play_log"] = true, true, true, true, true
+	known["sw_cache_limit_mb"], known["trust_proxy"], known["media_rate"], known["media_burst"], known["play_log"], known["likes"] = true, true, true, true, true, true
 	if err == nil {
 		c.SWCacheLimitMB, err = v.Int("sw_cache_limit_mb", c.SWCacheLimitMB)
 	}
@@ -72,6 +74,9 @@ func LoadConfig(path string) (Config, error) {
 	}
 	if err == nil {
 		c.PlayLog, err = v.Bool("play_log", c.PlayLog)
+	}
+	if err == nil {
+		c.Likes, err = v.Bool("likes", c.Likes)
 	}
 	var rate, burst int64
 	if err == nil {

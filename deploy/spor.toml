@@ -15,3 +15,5 @@ media_rate = 10
 media_burst = 60
 trust_proxy = true
 play_log = true
+# Thumbs up, one per browser session per track (cache/likes.log).
+likes = true
