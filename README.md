@@ -2,7 +2,7 @@
 
 A self-hosted music library in one Go binary. It serves your own tracks (audio and video) from a directory, signed with Ed25519. Share links preview properly in Signal, Messenger and Discord. The server has no dependencies, no database and no accounts.
 
-See [PLAN.md](PLAN.md) for the design.
+Full documentation: [docs/](docs/README.md) (publishing, server setup, configuration, logs, troubleshooting). See [PLAN.md](PLAN.md) for the design.
 
 ## Quick start
 
@@ -83,7 +83,7 @@ The footer shows `web/static/brand.png` and two buttons: `suno_url` (the artist 
 
 ```sh
 git clone https://github.com/pynezz/spor && cd spor
-sudo deploy/install.sh          # builds with Go >= 1.25, installs binary, unit and config
+sudo GO="$(command -v go)" deploy/install.sh   # builds with Go >= 1.25, installs binary, unit and config
 sudo cp spor.pub /etc/spor/spor.pub
 sudo systemctl enable --now spor
 ```

@@ -4,13 +4,20 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-GO=${GO:-go}
-if ! command -v "$GO" >/dev/null; then
-	echo "go not found; install Go >= 1.25 or set GO=/path/to/go" >&2
+if [ "$(id -u)" -ne 0 ]; then
+	echo "install.sh writes to /usr/local/bin, /etc/spor and /etc/systemd; run it as root:" >&2
+	echo "  sudo GO=\"\$(command -v go)\" $0" >&2
 	exit 1
 fi
 
-ver=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
+GO=${GO:-go}
+if ! command -v "$GO" >/dev/null; then
+	echo "go not found in root's PATH; install Go >= 1.25 or pass it: sudo GO=/path/to/go $0" >&2
+	exit 1
+fi
+
+# safe.directory: as root, git refuses to read a checkout owned by another user.
+ver=$(git -c safe.directory="$PWD" describe --tags --always --dirty 2>/dev/null || echo dev)
 echo "building spor $ver"
 CGO_ENABLED=0 "$GO" build -trimpath -ldflags "-s -w -X main.version=$ver" -o spor .
 install -m 0755 spor /usr/local/bin/spor

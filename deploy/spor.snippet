@@ -7,6 +7,10 @@ musikk.txtv.no, tracks.txtv.no {
 }
 
 lytt.txtv.no {
+	log {
+		output file /var/log/caddy/lytt.txtv.no.log
+	}
+
 	# Compress text only. Media under /m/ is already compressed, so leave it
 	# alone. spor pre-gzips library.json and static assets itself, and Caddy
 	# does not re-encode responses that already carry Content-Encoding.
